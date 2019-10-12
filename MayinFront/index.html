@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.0/socket.io.js"></script>
+    <style>
+        button {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+
+<body style="text-align: center">
+    <select>
+        <option value="1">Kolay</option>
+        <option value="2">Normal</option>
+        <option value="3">Zor</option>
+    </select>
+    <button id="btnstart">Start!</button>
+    <h1>Oyun Ekranı</h1>
+    <div class="gamelines">
+        <div class="gamebox" id="gamebox3">
+            <button no="1"></button>
+            <button no="2"></button>
+            <button no="3"></button>
+            <button no="4"></button>
+        </div>
+        <div class="gamebox" id="gamebox2">
+            <button no="1"></button>
+            <button no="2"></button>
+            <button no="3"></button>
+            <button no="4"></button>
+        </div>
+        <div class="gamebox" id="gamebox1">
+            <button no="1"></button>
+            <button no="2"></button>
+            <button no="3"></button>
+            <button no="4"></button>
+        </div>
+    </div>
+
+</body>
+
+</html>
+<script>
+    var socket = io.connect('http://localhost:3001');
+    $(".gamelines button").attr("disabled", "disabled");
+
+    $(document).on("click", "#btnstart", function () {
+        var level = $("select option:selected").val();
+        socket.emit('startgame', level);
+
+        $("#gamebox" + 1 + " button").removeAttr("disabled");
+    })
+    var x = 1;
+    $(document).on("click", ".gamebox button", function () {
+        var no = $(this).attr("no");
+        var oyunislem = new Object();
+        oyunislem.tiklanan = no;
+        oyunislem.userid = 5;
+        oyunislem.linenumber = x;
+
+        socket.emit("oyna", oyunislem)
+    })
+
+    socket.on("continue", function (socketx) {
+        $("#gamebox" + socketx + " button").removeAttr("disabled");
+        $("#gamebox" + (Number(socketx) - 1) + " button").attr("disabled", "disabled");
+
+        x = socketx;
+    })
+
+    socket.on('crash', function () {
+        $("body").css("background-color", "red");
+    })
+
+    socket.on("sendmayin", function (mayinlar) {
+        console.log(mayinlar);
+    })
+</script>
