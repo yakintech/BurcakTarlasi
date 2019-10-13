@@ -92,7 +92,10 @@
     })
 
 
-
+    socket.on('parayok',function(){
+        $("body").html("");
+        alert("Paran bitti");
+    })
     socket.on('crash', function () {
         $("body").css("background-color", "red");
     })
