@@ -1,13 +1,14 @@
 var app = require('express')();
 var server = require('http').Server(app);
 var io = require('socket.io')(server);
+var conf = require('./config');
 const Pool = require('pg').Pool
 const db = new Pool({
-    user: 'postgres',
-    host: 'localhost',
-    database: 'MayinTarlasiDB',
-    password: '123',
-    port: 5432,
+    user: conf.sql.user,
+    host: conf.sql.host,
+    database: conf.sql.database,
+    password: conf.sql.password,
+    port: conf.sql.port,
 });
 
 
@@ -17,10 +18,13 @@ server.listen(3001, function () {
 var x;
 var tutar;
 io.on('connection', function (socket) {
-    var mayinlar = [];
-    var oranlar = [];
-    var activegameid;
-    socket.on('startgame', function (game) {
+     var mayinlar = [];
+     var oranlar = [];
+    
+const game = {
+    activegameid:0,
+    'mayinvarmi':false,
+    startgame: (game)=>{
         tutar = game.tutar;
 
 
@@ -42,7 +46,7 @@ io.on('connection', function (socket) {
             
                         }
                         else {
-                            activegameid = results.rows[0].id;
+                            game.activegameid = results.rows[0].id;
                         }
                     });
                     var satirmayin = [];
@@ -63,7 +67,6 @@ io.on('connection', function (socket) {
                         oranlar.push(oran);
                     }
             
-            
                     db.query('update public."User" set totalpoint = totalpoint -' + tutar + 'where id = 1', (error, results) => {
                         if (error) {
             
@@ -83,17 +86,13 @@ io.on('connection', function (socket) {
                 }
             }
         });
-        console.log(kullaniciparadurum)
- 
-    })
-
-    socket.on('oyna', function (oyundata) {
+    },
+    oyna:(oyundata)=>{
         x = oyundata.linenumber;
         var tiklananmayin = Number(oyundata.tiklanan);
-        var mayinvarmi = false;
         for (i = 0; i < 2; i++) {
             if (mayinlar[x][i] == tiklananmayin) {
-                mayinvarmi = true;
+                game.mayinvarmi = true;
                 socket.emit('crash');
             }
         }
@@ -101,14 +100,13 @@ io.on('connection', function (socket) {
             x++;
             socket.emit('continue', x);
         }
-    })
-
-    socket.on('cek', function () {
+    },
+    cek:()=>{
         var result = oranlar[x - 2] * Number(tutar);
         socket.emit("endgame", result);
         //gamuser tablosuna insert işlemi yap. userid sallayabilirsin
         db.query(`INSERT INTO public."GameUser"( gameid, point, bet,userid)
-           VALUES (`+ activegameid + `, ` + oranlar[x - 2] + `, ` + tutar + `,1);`, (error, results) => {
+           VALUES (`+ game.activegameid + `, ` + oranlar[x - 2] + `, ` + tutar + `,1);`, (error, results) => {
             if (error) {
 
             }
@@ -124,7 +122,11 @@ io.on('connection', function (socket) {
                 });
             }
         });
+    }
 
+}
 
-    })
+    socket.on('startgame', game.startgame)
+    socket.on('oyna', game.startgame)
+    socket.on('cek', game.cek)
 });
