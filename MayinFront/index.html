@@ -25,6 +25,7 @@
     </select>
     <button id="btnstart">Start!</button>
     <button id="btncek">ÇEK!</button>
+    <label>Cüzdan: </label>
     <div>
         <label>Yatırılacak</label>
         <input type="text" id="yatirilan" />
@@ -75,7 +76,7 @@
     }
     var socket = io.connect(oyun.conf.socketurl);
 
-    
+
     $(".gamelines button").attr("disabled", "disabled");
 
     $(document).on("click", oyun.btnstart, oyun.start);
@@ -94,6 +95,14 @@
 
     $(document).on("click", "#btncek", function () {
         socket.emit("cek");
+    })
+
+    socket.on("by",function(){
+        alert("güle güle gözümün çiçeği!!")
+    })
+
+    socket.on("cuzdan",function(data){
+        alert(data);
     })
     socket.on("continue", function (socketx) {
         $(".gamebox" + socketx + " button").removeAttr("disabled");

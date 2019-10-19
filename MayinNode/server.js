@@ -20,10 +20,10 @@ var tutar;
 io.on('connection', function (socket) {
      var mayinlar = [];
      var oranlar = [];
+     var mayinvarmi=false
     
 const game = {
     activegameid:0,
-    'mayinvarmi':false,
     startgame: (game)=>{
         tutar = game.tutar;
 
@@ -37,6 +37,7 @@ const game = {
             else {
                 var total = results.rows[0].totalpoint;
                 if (Number(tutar) <= Number(total)) {
+                    console.log("OK!")
                     kullaniciparadurum = 1;
                 }
                 if(kullaniciparadurum == 1)
@@ -72,7 +73,7 @@ const game = {
             
                         }
                         else {
-                            console.log("Kullanıcı parası bende!!");
+                            console.log("Kullanıcı parası bende!!" + tutar);
                         }
             
                     });
@@ -82,6 +83,7 @@ const game = {
             
                 }
                 else{
+                    console.log(kullaniciparadurum);
                     socket.emit("parayok");
                 }
             }
@@ -104,6 +106,7 @@ const game = {
     cek:()=>{
         var result = oranlar[x - 2] * Number(tutar);
         socket.emit("endgame", result);
+
         //gamuser tablosuna insert işlemi yap. userid sallayabilirsin
         db.query(`INSERT INTO public."GameUser"( gameid, point, bet,userid)
            VALUES (`+ game.activegameid + `, ` + oranlar[x - 2] + `, ` + tutar + `,1);`, (error, results) => {
@@ -123,10 +126,20 @@ const game = {
             }
         });
     }
-
 }
 
+//100 db den gelecek
+//id si kullanıcının 1 olsun
+io.to(socket.id).emit('cuzdan',100);
+
+
+
+
+socket.on('disconnect', function () {
+    io.to(socket.id).emit("by");
+
+});
     socket.on('startgame', game.startgame)
-    socket.on('oyna', game.startgame)
+    socket.on('oyna', game.oyna)
     socket.on('cek', game.cek)
 });
